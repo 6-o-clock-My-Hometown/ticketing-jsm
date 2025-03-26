@@ -45,13 +45,8 @@ public class SeatService {
 
     }
 
-//     public void saveSeats(Show show, List<CreateShowSeatsRequestDto> seatDto) {
-//         List<Seat> seats = seatDto.stream()
-//                 .map(dto -> new Seat(show, dto.getSeatName(), dto.getSeatCount(), dto.getSeatPrice()))
-//                 .collect(Collectors.toList());
-
-//         seatRepository.saveAll(seats);
-
-//     }
+    public Seat findSeat(Long id) {
+        return seatRepository.findById(id).orElseThrow(() -> new InvalidRequestException("해당 좌석을 찾을 수 없습니다"));
+    }
 
 }

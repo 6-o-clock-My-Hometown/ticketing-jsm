@@ -5,7 +5,6 @@ import com.example.sparta_ticketing.common.exception.ShowNotFoundException;
 import com.example.sparta_ticketing.domain.auth.entity.AuthUser;
 import com.example.sparta_ticketing.domain.seat.entity.Seat;
 import com.example.sparta_ticketing.domain.seat.repository.SeatRepository;
-import com.example.sparta_ticketing.domain.seat.service.SeatService;
 import com.example.sparta_ticketing.domain.show.dto.request.CreateShowRequestDto;
 import com.example.sparta_ticketing.domain.show.dto.request.CreateShowSeatsRequestDto;
 import com.example.sparta_ticketing.domain.show.dto.request.UpdateShowRequestDto;
@@ -16,11 +15,11 @@ import com.example.sparta_ticketing.domain.show.enums.ShowStatus;
 import com.example.sparta_ticketing.domain.show.repository.ShowRepository;
 import com.example.sparta_ticketing.domain.user.entity.User;
 import com.example.sparta_ticketing.domain.user.service.UserService;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,10 +33,11 @@ public class ShowService {
     private final ShowRepository showRepository;
     private final UserService userService;
     private final SeatRepository seatRepository;
+    private final RedisTemplate<String, String> redisTemplate;
 
     @Transactional
     public void createShow(AuthUser authUser, CreateShowRequestDto createShowRequestDto) {
-        User user = userService.findById(authUser.getId()).orElseThrow(()-> new EntityNotFoundException("회원을 찾지 못했습니다."));
+        User user = userService.findUser(authUser.getId());
 
         int totalSeats = 0;
         for (CreateShowSeatsRequestDto seat: createShowRequestDto.getSeats()) {
@@ -47,9 +47,15 @@ public class ShowService {
             throw new InvalidRequestException("좌석의 총 개수가 0이 될 수 없습니다.");
         }
 
+        //
         Show show = new Show(createShowRequestDto, totalSeats, user);
 
         Show savedShow = showRepository.save(show);
+
+        for (CreateShowSeatsRequestDto seat : createShowRequestDto.getSeats()) {
+            redisTemplate.opsForValue().set("show:" + show.getId() + "/" + seat.getSeatName(), String.valueOf(seat.getSeatCount()));
+        }
+
         List<Seat> seats = createShowRequestDto.getSeats().stream()
                 .map(dto -> new Seat(savedShow, dto.getSeatName(), dto.getSeatCount(), dto.getSeatPrice()))
                 .collect(Collectors.toList());

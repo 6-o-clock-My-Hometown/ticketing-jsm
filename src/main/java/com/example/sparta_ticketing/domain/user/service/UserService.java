@@ -1,5 +1,6 @@
 package com.example.sparta_ticketing.domain.user.service;
 
+import com.example.sparta_ticketing.common.exception.UserNotFoundException;
 import com.example.sparta_ticketing.domain.auth.entity.AuthUser;
 import com.example.sparta_ticketing.common.exception.InvalidRequestException;
 import com.example.sparta_ticketing.domain.user.dto.UserResponse;
@@ -43,8 +44,8 @@ public class UserService {
 
     }
 
-    public Optional<User> findById(Long id) {
-        return userRepository.findById(id);
+    public User findUser(Long id) {
+        return userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("해당 유저를 찾을 수 없습니다."));
     }
 
 }
