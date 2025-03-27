@@ -45,6 +45,7 @@ public class SeatService {
 
     }
 
+    @Transactional(readOnly = true)
     public Seat findSeat(Long id) {
         return seatRepository.findById(id).orElseThrow(() -> new InvalidRequestException("해당 좌석을 찾을 수 없습니다"));
     }

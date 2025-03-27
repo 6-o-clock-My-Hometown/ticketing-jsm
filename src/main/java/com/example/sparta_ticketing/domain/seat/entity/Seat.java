@@ -42,4 +42,16 @@ public class Seat{
         this.price = price;
     }
 
+    public void seatDecrement() {
+        this.count--;
+    }
+
+    public void restoreSeatCount() {
+        this.count++;
+    }
+
+    public int setSeatCount(int count) {
+        this.count = count;
+        return this.count;
+    }
 }

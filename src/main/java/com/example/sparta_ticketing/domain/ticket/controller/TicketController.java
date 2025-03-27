@@ -15,7 +15,7 @@ public class TicketController {
     private final TicketService ticketService;
 
     @PostMapping("/tickets")
-    public ResponseEntity<Long> createTicket(@Valid @RequestBody CreateTicketRequestDto dto) {
+    public ResponseEntity<Long> createTicket(@Valid @RequestBody CreateTicketRequestDto dto) throws InterruptedException {
         return ResponseEntity.ok(ticketService.issueTicket(dto));
     }
 

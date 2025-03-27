@@ -4,6 +4,7 @@ import com.example.sparta_ticketing.domain.seat.entity.Seat;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -17,4 +18,8 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
 
     @Query("select sum(s.count) from Seat s where s.show.id= :showId")
     int sumSeatCountByShowId(@Param("showId") Long showId);
+
+    @Modifying
+    @Query("UPDATE Seat s SET s.count = s.count - 1 WHERE s.id = :seatId AND s.count > 0")
+    int decrementSeatCount(@Param("seatId") Long seatId);
 }
