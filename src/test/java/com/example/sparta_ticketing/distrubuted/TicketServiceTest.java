@@ -40,13 +40,13 @@ public class TicketServiceTest {
 
     @BeforeEach
     public void setUp() {
-        redisTemplate.opsForValue().set(REDIS_KEY, String.valueOf(5));
+        redisTemplate.opsForValue().set(REDIS_KEY, String.valueOf(10));
     }
 
 
     @Test
     void noLockConcurrencyTest() throws InterruptedException {
-        int testCount = 10;
+        int testCount = 15;
         ExecutorService executorService = Executors.newFixedThreadPool(10);
         CountDownLatch latch = new CountDownLatch(testCount);
 

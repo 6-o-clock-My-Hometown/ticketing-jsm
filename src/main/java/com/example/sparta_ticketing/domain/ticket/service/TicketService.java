@@ -1,7 +1,7 @@
 package com.example.sparta_ticketing.domain.ticket.service;
 
 import com.example.sparta_ticketing.common.exception.InvalidRequestException;
-import com.example.sparta_ticketing.common.redis.concurrency.RedisLockService;
+import com.example.sparta_ticketing.common.redis.aop.RedisLock;
 import com.example.sparta_ticketing.domain.seat.entity.Seat;
 import com.example.sparta_ticketing.domain.seat.service.SeatService;
 import com.example.sparta_ticketing.domain.show.entity.Show;
@@ -29,39 +29,36 @@ public class TicketService {
     private final UserService userService;
     private final SeatService seatService;
     private final RedisTemplate<String, String> redisTemplate;
-    private final RedisLockService redisLockService;
 
+    @RedisLock(key = "redisLock")
     @Transactional
-    public Long issueTicket(@Valid CreateTicketRequestDto dto) throws InterruptedException {
+    public Long issueTicket(@Valid CreateTicketRequestDto dto){
 
         User user = userService.findUser(dto.getUserId());
         Show show = showService.getShow(dto.getShowId());
         Seat seat = seatService.findSeat(dto.getSeatId());
 
         String redisKey = "show:" + show.getId() + "/" + seat.getName();
-        redisLockService.waitForLock();
 
-        try {
-            Long initialTicket = Long.valueOf(redisTemplate.opsForValue().get(redisKey));
+        Long initialTicket = Long.valueOf(redisTemplate.opsForValue().get(redisKey));
 
-            log.info("ticketLeft={}", initialTicket);
-            if (initialTicket == null || initialTicket <= 0) {
-                throw new InvalidRequestException("해당 좌석이 매진되었습니다");
-            }
 
-            Long ticketLeft = redisTemplate.opsForValue().decrement(redisKey);
-
-            log.info("redisKey={}", redisKey);
-
-            Ticket ticket = new Ticket(user, show, seat);
-
-            Ticket savedTicket = ticketRepository.save(ticket);
-            int count = seat.setSeatCount(ticketLeft.intValue());
-            log.info("seat.setSeatCount(ticketLeft.intValue())={}", count);
-            return savedTicket.getId();
-        }finally {
-            redisLockService.unlock("redisLock");
+        if (initialTicket == null || initialTicket <= 0) {
+            throw new InvalidRequestException("해당 좌석이 매진되었습니다");
         }
+
+        Long ticketLeft = redisTemplate.opsForValue().decrement(redisKey);
+        log.info("ticketLeft={}", ticketLeft);
+
+        log.info("redisKey={}", redisKey);
+
+        Ticket ticket = new Ticket(user, show, seat);
+
+        Ticket savedTicket = ticketRepository.save(ticket);
+        int count = seat.setSeatCount(ticketLeft.intValue());
+
+        log.info("seat.setSeatCount(ticketLeft.intValue())={}", count);
+        return savedTicket.getId();
     }
 
     @Transactional(readOnly = true)

@@ -30,7 +30,6 @@ public class NoLockTicketService {
     private final ShowService showService;
     private final UserService userService;
     private final SeatService seatService;
-    private final RedisTemplate<String, String> redisTemplate;
     private final SeatRepository seatRepository;
 
 
